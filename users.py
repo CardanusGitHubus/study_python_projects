@@ -1,4 +1,3 @@
-import uuid
 import datetime
 
 import sqlalchemy as sa
