@@ -14,31 +14,33 @@ def albums(artist):
         result = HTTPError(404, message)
     else:
         album_names = [album.album for album in albums_list]
-        result = "Найдено {} альбомов {}: ".format(len(album_names), artist)
-        result += ", ".join(album_names)
+        result = "Найдено {} альбомов {}:<br>".format(len(album_names), artist)
+        result += "<br>".join(album_names)
     return result
 
 
 @route("/albums", method="POST")
 def album_init():
-    year_ = request.forms.get("year")
-    if year_.isdigit() is False:
-        raise ValueError("Год должен содержать только цифры")
-    album_data = {
-        "year": year_,
-        "artist": request.forms.get("artist"),
-        "genre": request.forms.get("genre"),
-        "album": request.forms.get("album")
-    }
+    year = request.forms.get("year")
+    artist = request.forms.get("artist")
+    genre = request.forms.get("genre")
+    album_name = request.forms.get("album")
+
     try:
-        album.save_album(album_data)
+        year = int(year)
+    except ValueError:
+        return HTTPError(400, "Год альбома должен состоять из цифр")
+
+    try:
+        album.save_album(year, artist, genre, album_name)
+    except album.AlreadyExists as err:
+        result = HTTPError(409, err)
     except album.CommitError as err:
-        result = HTTPError(409)
-        print("Invalid album data: ", err)
-        return result
+        result = HTTPError(400, err)
     else:
+        result = "Данные успешно сохранены"
         print("Album saved")
-        return "Данные успешно сохранены"
+    return result
 
 
 if __name__ == "__main__":
