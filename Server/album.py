@@ -23,6 +23,13 @@ class Album(Base):
 
 class CommitError(Exception):
     """
+    Исключение в случае, если заполнены не все поля данных при сохранении альбома
+    """
+    pass
+
+
+class AlreadyExists(CommitError):
+    """
     Исключение в случае, если добавляемый альбом уже существует в базе данных
     """
     pass
@@ -47,20 +54,24 @@ def find(artist):
     return albums
 
 
-def save_album(album):
+def save_album(year, artist, genre, album_name):
     """
     Добавляет данные из словаря в объект альбома и сохраняет альбом в базу данных, если альбома
     с таким названием и исполнителем еще нет
     """
-    session = connect_db()
-    album = Album(
-        year=album["year"],
-        artist=album["artist"],
-        genre=album["genre"],
-        album=album["album"]
-    )
-    is_albums = session.query(Album).filter(Album.artist == album.artist, Album.album == album.album).all()
-    if is_albums:
-        raise CommitError("Such album is already exists")
-    session.add(album)
-    session.commit()
+    if not isinstance(artist, str) or not isinstance(genre, str) or not isinstance(album_name, str):
+        raise CommitError("Заполнены не все поля данных")
+    else:
+        session = connect_db()
+        album = Album(
+            year=year,
+            artist=artist,
+            genre=genre,
+            album=album_name
+        )
+        is_album = session.query(Album).filter(Album.artist == album.artist, Album.album == album.album).first()
+        if is_album:
+            raise AlreadyExists("Such album is already exists")
+        session.add(album)
+        session.commit()
+
